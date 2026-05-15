@@ -3,54 +3,106 @@ from PIL import Image
 from io import BytesIO
 import requests
 
-# BACKEND URL
-BASE_URL = "https://civic-lens-backend.onrender.com"   # 🔁 change this after deploy
+# ---------------- BACKEND URL ----------------
 
-st.set_page_config(page_title="Civic Lens", layout="wide")
+BASE_URL = "https://civic-lens-backend.onrender.com"
+
+# ---------------- PAGE CONFIG ----------------
+
+st.set_page_config(
+    page_title="Civic Lens",
+    layout="wide"
+)
+
+# ---------------- TITLE ----------------
 
 st.title("🚧 Civic Lens")
+
 st.subheader("Smart Urban Issue Detection System")
 
 st.markdown("---")
 
-# Feature selection
+st.markdown("## Welcome")
+
+st.write(
+    "Login with Google to continue to the detection dashboard."
+)
+
+login_url = f"{BASE_URL}/login"
+
+st.link_button(
+    "🔐 Continue with Google",
+    login_url
+)
+
+st.markdown("---")
+
+# ---------------- DETECTION OPTIONS ----------------
+
 feature = st.selectbox(
     "Select Detection Type",
-    ["pothole", "flood", "pothole-video", "flood-video"]
+    [
+        "pothole",
+        "flood",
+        "pothole-video",
+        "flood-video"
+    ]
 )
+
+# ---------------- FILE UPLOAD ----------------
 
 uploaded_file = st.file_uploader(
     "Upload Image or Video",
     type=["jpg", "jpeg", "png", "mp4"]
 )
 
+# ---------------- PROCESS ----------------
+
 if uploaded_file:
 
     col1, col2 = st.columns(2)
 
-    # LEFT → INPUT
+    # ---------------- INPUT ----------------
+
     with col1:
+
         if "video" in uploaded_file.type:
             st.video(uploaded_file)
-        else:
-            st.image(uploaded_file, caption="Uploaded Image", use_container_width=True)
 
-    # RIGHT → OUTPUT
+        else:
+            st.image(
+                uploaded_file,
+                caption="Uploaded Image",
+                use_container_width=True
+            )
+
+    # ---------------- OUTPUT ----------------
+
     with col2:
+
         if st.button("Detect"):
 
             with st.spinner("Processing... ⏳"):
 
-                files = {"file": uploaded_file.getvalue()}
+                files = {
+                    "file": uploaded_file.getvalue()
+                }
 
                 endpoint = f"{BASE_URL}/detect/{feature}"
 
-                response = requests.post(endpoint, files=files)
+                response = requests.post(
+                    endpoint,
+                    files=files
+                )
+
+                # ---------------- SUCCESS ----------------
 
                 if response.status_code == 200:
 
-                    # VIDEO OUTPUT
-                    if feature == "pothole-video":
+                    # -------- VIDEO OUTPUT --------
+
+                    if feature in ["pothole-video", "flood-video"]:
+
                         st.video(response.content)
 
                         st.download_button(
@@ -60,9 +112,13 @@ if uploaded_file:
                             mime="video/mp4"
                         )
 
-                    # IMAGE OUTPUT
+                    # -------- IMAGE OUTPUT --------
+
                     else:
-                        image = Image.open(BytesIO(response.content))
+
+                        image = Image.open(
+                            BytesIO(response.content)
+                        )
 
                         st.image(
                             image,
@@ -79,9 +135,16 @@ if uploaded_file:
 
                     st.success("Detection completed 🚀")
 
+                # ---------------- ERROR ----------------
+
                 else:
+
                     st.error("Detection failed ❌")
+
                     st.write(response.text)
 
+# ---------------- FOOTER ----------------
+
 st.markdown("---")
+
 st.success("Upload → Detect → View / Download 🚀")

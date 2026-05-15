@@ -7,16 +7,19 @@ import cv2
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MODEL_PATH = os.path.join(BASE_DIR, "..", "models", "flood.pt")
 
-# LOAD MODEL
-model = YOLO(MODEL_PATH)
-
-# DEBUG
-print("Flood model loaded successfully")
-print("Classes:", model.names)
+print("MODEL PATH:", MODEL_PATH)
+print("MODEL EXISTS:", os.path.exists(MODEL_PATH))
 
 
 def detect_flood(image_path):
+
     os.makedirs("outputs", exist_ok=True)
+
+    # LOAD MODEL INSIDE FUNCTION
+    model = YOLO(MODEL_PATH)
+
+    print("Flood model loaded")
+    print("Classes:", model.names)
 
     results = model.predict(
         source=image_path,
@@ -24,12 +27,10 @@ def detect_flood(image_path):
         imgsz=640
     )
 
-    # DEBUG DETECTIONS
     print("Flood detections:", results[0].boxes)
 
     output_path = f"outputs/flood_{uuid.uuid4().hex}.jpg"
 
-    # DRAW DETECTIONS
     annotated = results[0].plot()
 
     cv2.imwrite(output_path, annotated)
@@ -38,7 +39,11 @@ def detect_flood(image_path):
 
 
 def detect_flood_video(video_path):
+
     os.makedirs("outputs", exist_ok=True)
+
+    # LOAD MODEL INSIDE FUNCTION
+    model = YOLO(MODEL_PATH)
 
     cap = cv2.VideoCapture(video_path)
 
@@ -55,6 +60,7 @@ def detect_flood_video(video_path):
     output_path = f"outputs/flood_video_{uuid.uuid4().hex}.mp4"
 
     fourcc = cv2.VideoWriter_fourcc(*"mp4v")
+
     out = cv2.VideoWriter(
         output_path,
         fourcc,
@@ -63,6 +69,7 @@ def detect_flood_video(video_path):
     )
 
     while True:
+
         ret, frame = cap.read()
 
         if not ret:
@@ -74,7 +81,6 @@ def detect_flood_video(video_path):
             imgsz=640
         )
 
-        # DEBUG
         print("Video detections:", results[0].boxes)
 
         annotated = results[0].plot()
