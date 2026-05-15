@@ -3,7 +3,16 @@ import os
 import uuid
 import cv2
 
-model = YOLO("models/flood.pt")
+# ABSOLUTE MODEL PATH
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+MODEL_PATH = os.path.join(BASE_DIR, "..", "models", "flood.pt")
+
+# LOAD MODEL
+model = YOLO(MODEL_PATH)
+
+# DEBUG
+print("Flood model loaded successfully")
+print("Classes:", model.names)
 
 
 def detect_flood(image_path):
@@ -11,12 +20,19 @@ def detect_flood(image_path):
 
     results = model.predict(
         source=image_path,
-        conf=0.37,   # your tuned value
+        conf=0.05,
         imgsz=640
     )
 
+    # DEBUG DETECTIONS
+    print("Flood detections:", results[0].boxes)
+
     output_path = f"outputs/flood_{uuid.uuid4().hex}.jpg"
-    results[0].save(filename=output_path)
+
+    # DRAW DETECTIONS
+    annotated = results[0].plot()
+
+    cv2.imwrite(output_path, annotated)
 
     return output_path
 
@@ -29,21 +45,38 @@ def detect_flood_video(video_path):
     if not cap.isOpened():
         raise Exception("Error opening video")
 
-    width = int(cap.get(3))
-    height = int(cap.get(4))
-    fps = cap.get(5) or 20
+    width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+    height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    fps = cap.get(cv2.CAP_PROP_FPS)
+
+    if fps == 0:
+        fps = 20
 
     output_path = f"outputs/flood_video_{uuid.uuid4().hex}.mp4"
 
     fourcc = cv2.VideoWriter_fourcc(*"mp4v")
-    out = cv2.VideoWriter(output_path, fourcc, fps, (width, height))
+    out = cv2.VideoWriter(
+        output_path,
+        fourcc,
+        fps,
+        (width, height)
+    )
 
     while True:
         ret, frame = cap.read()
+
         if not ret:
             break
 
-        results = model(frame, conf=0.05)
+        results = model.predict(
+            source=frame,
+            conf=0.05,
+            imgsz=640
+        )
+
+        # DEBUG
+        print("Video detections:", results[0].boxes)
+
         annotated = results[0].plot()
 
         out.write(annotated)

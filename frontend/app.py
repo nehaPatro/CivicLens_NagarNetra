@@ -4,7 +4,7 @@ from io import BytesIO
 import requests
 
 # BACKEND URL
-BASE_URL = "https://your-backend.onrender.com"   # 🔁 change this after deploy
+BASE_URL = "https://civic-lens-backend.onrender.com"   # 🔁 change this after deploy
 
 st.set_page_config(page_title="Civic Lens", layout="wide")
 
